@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.json());
+app.use(express.static("dist"));
 
 const requestLogger = (request, response, next) => {
   console.log("Method:", request.method);
@@ -28,10 +29,6 @@ const generatedId = () => {
 
   return String(maxId + 1);
 };
-
-app.get("/", (request, response) => {
-  response.send("<h1>Hello World!</h1>");
-});
 
 app.get("/api/notes", (request, response) => {
   response.json(notes);
@@ -65,6 +62,26 @@ app.post("/api/notes", (request, response) => {
 
   notes = notes.concat(note);
   response.json(note);
+});
+
+app.put("/api/notes/:id", (request, response) => {
+  const id = request.params.id;
+  const note = notes.find((note) => note.id === id);
+
+  if (!note) {
+    response.status(404).end();
+  }
+
+  const body = request.body;
+
+  const updNote = {
+    content: body.content ?? note.content,
+    important: Boolean(body.important) ?? note.important,
+    id: note.id,
+  };
+
+  notes = notes.map((n) => (n.id !== id ? n : updNote));
+  response.json(updNote);
 });
 
 app.delete("/api/notes/:id", (request, response) => {
